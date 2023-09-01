@@ -23,7 +23,8 @@ def get_train_val_data(data_config,
     C is the number of channels.
     """
     assert isinstance(datasplit_type, int)
-    if data_config.data_type == DataType.OptiMEM100_014:
+    # Number of cell, H, W, C
+    if data_config.data_type == DataType.OptiMEM100_014 or data_config.data_type == DataType.DZGongSIM:
         return _load_tiff_train_val(fpath,
                                     data_config,
                                     datasplit_type,

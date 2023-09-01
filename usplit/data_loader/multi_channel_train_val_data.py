@@ -22,13 +22,15 @@ def train_val_data(fpath, data_config, datasplit_type: DataSplitType, val_fracti
                            datasplit_type,
                            data_config.channel_1,
                            data_config.channel_2,
+                           data_config.channel_3, #added by DZ
                            val_fraction=val_fraction,
                            test_fraction=test_fraction)
 
 
-def _train_val_data(data, datasplit_type: DataSplitType, channel_1, channel_2, val_fraction=None, test_fraction=None):
+def _train_val_data(data, datasplit_type: DataSplitType, channel_1, channel_2, channel_3, val_fraction=None, test_fraction=None):
+    # takes 3 channels as input. 
     assert data.shape[-1] > max(channel_1, channel_2), 'Invalid channels'
-    data = data[..., [channel_1, channel_2]]
+    data = data[..., [channel_1, channel_2,channel_3]]
     if datasplit_type == DataSplitType.All:
         return data.astype(np.float32)
 

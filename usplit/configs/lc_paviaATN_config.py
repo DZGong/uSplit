@@ -13,9 +13,11 @@ def get_config():
     config = get_default_config()
     data = config.data
     data.image_size = 64
-    data.data_type = DataType.OptiMEM100_014
-    data.channel_1 = 2
-    data.channel_2 = 3
+    data.data_type = DataType.DZGongSIM
+    data.channel_1 = 0
+    data.channel_2 = 1
+    data.channel_3 = 2 #added by DZ
+    # todo: add one more channel.
 
     data.sampler_type = SamplerType.DefaultSampler
     data.deterministic_grid = False
@@ -66,7 +68,7 @@ def get_config():
 
     model = config.model
     model.model_type = ModelType.LadderVae
-    model.z_dims = [128, 128, 128, 128]
+    model.z_dims = [128, 128, 128, 128, 128,128, 128, 128]
 
     model.encoder.batchnorm = True
     model.encoder.blocks_per_layer = 1

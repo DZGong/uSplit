@@ -384,7 +384,6 @@ class MultiChDeterministicTiffDloader:
 
         mean = np.array(mean_arr)
         std = np.array(std_arr)
-
         return mean[None, :, None, None], std[None, :, None, None]
 
     def compute_mean_std(self, allow_for_validation_data=False):
@@ -402,8 +401,10 @@ class MultiChDeterministicTiffDloader:
             else:
                 mean = np.mean(self._data, keepdims=True).reshape(1, 1, 1, 1)
                 std = np.std(self._data, keepdims=True).reshape(1, 1, 1, 1)
-            mean = np.repeat(mean, 2, axis=1)
-            std = np.repeat(std, 2, axis=1)
+            
+            
+            mean = np.repeat(mean, self._data.shape[-1], axis=1)
+            std = np.repeat(std, self._data.shape[-1], axis=1)
 
             if self._skip_normalization_using_mean:
                 mean = np.zeros_like(mean)
@@ -414,7 +415,7 @@ class MultiChDeterministicTiffDloader:
             return self.compute_individual_mean_std()
 
         elif self._use_one_mu_std is None:
-            return np.array([0.0, 0.0]).reshape(1, 2, 1, 1), np.array([1.0, 1.0]).reshape(1, 2, 1, 1)
+            return np.array([0.0, 0.0]).reshape(1, self._data.shape[-1], 1, 1), np.array([1.0, 1.0]).reshape(1, self._data.shape[-1], 1, 1)
 
     def _get_random_hw(self, h: int, w: int):
         """
@@ -449,15 +450,16 @@ class MultiChDeterministicTiffDloader:
         return tuple(final_img_tuples)
 
     def _compute_input_with_alpha(self, img_tuples, alpha):
-        assert len(img_tuples) == 2
+        assert len(img_tuples) == 3
         assert self._normalized_input is True, "normalization should happen here"
 
-        inp = img_tuples[0] * alpha + img_tuples[1] * (1 - alpha)
+        # inp = img_tuples[0] * alpha + img_tuples[1] * (1 - alpha)
+        inp =(img_tuples[0] + img_tuples[1]+ img_tuples[2])/3
         mean, std = self.get_mean_std()
         mean = mean.squeeze()
         std = std.squeeze()
-        assert mean[0] == mean[1] and len(mean) == 2
-        assert std[0] == std[1] and len(std) == 2
+        # assert mean[0] == mean[1] and len(mean) == 2
+        # assert std[0] == std[1] and len(std) == 2
 
         inp = (inp - mean[0]) / std[0]
         return inp.astype(np.float32)

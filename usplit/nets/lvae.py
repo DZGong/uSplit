@@ -33,12 +33,13 @@ def compute_batch_mean(x):
 
 class LadderVAE(pl.LightningModule):
 
-    def __init__(self, data_mean, data_std, config, use_uncond_mode_at=[], target_ch=2):
+    def __init__(self, data_mean, data_std, config, use_uncond_mode_at=[], target_ch=3):
         super().__init__()
         self.lr = config.training.lr
         self.lr_scheduler_patience = config.training.lr_scheduler_patience
         self.ch1_recons_w = config.loss.get('ch1_recons_w', 1)
         self.ch2_recons_w = config.loss.get('ch2_recons_w', 1)
+        self.ch3_recons_w = config.loss.get('ch3_recons_w', 1) #added by DZ
 
         # grayscale input
         self.color_ch = config.data.get('color_ch', 1)
@@ -242,6 +243,7 @@ class LadderVAE(pl.LightningModule):
 
         self.channel_1_w = config.loss.get('channel_1_w', 1)
         self.channel_2_w = config.loss.get('channel_2_w', 1)
+        self.channel_3_w = config.loss.get('channel_3_w', 1)
 
         self.likelihood = self.create_likelihood_module()
         # gradient norms. updated while training. this is also logged.
@@ -410,6 +412,7 @@ class LadderVAE(pl.LightningModule):
         loss_dict['loss'] = torch.mean(loss_dict['loss'])
         loss_dict['ch1_loss'] = torch.mean(loss_dict['ch1_loss'])
         loss_dict['ch2_loss'] = torch.mean(loss_dict['ch2_loss'])
+        loss_dict['ch3_loss'] = torch.mean(loss_dict['ch3_loss']) #added by DZ
         if 'mixed_loss' in loss_dict:
             loss_dict['mixed_loss'] = torch.mean(loss_dict['mixed_loss'])
         if return_predicted_img:
@@ -451,14 +454,15 @@ class LadderVAE(pl.LightningModule):
         """
         each of the channels gets multiplied with a different weight.
         """
-        if self.ch1_recons_w == 1 and self.ch2_recons_w == 1:
+        if self.ch1_recons_w == 1 and self.ch2_recons_w == 1 and self.ch3_recons_w == 1: #added ch3 by DZ
             return ll
         mask1 = torch.zeros((len(ll), ll.shape[1], 1, 1), device=ll.device)
         mask1[:, 0] = 1
 
         mask2 = torch.zeros((len(ll), ll.shape[1], 1, 1), device=ll.device)
         mask2[:, 1] = 1
-        return ll * mask1 * self.ch1_recons_w + ll * mask2 * self.ch2_recons_w
+
+        return ll * mask1 * self.ch1_recons_w + ll * mask2 * self.ch2_recons_w #added ch3 by DZ
 
     def _get_reconstruction_loss_vector(self, reconstruction, input, return_predicted_img=False, likelihood_obj=None):
         """
@@ -476,11 +480,12 @@ class LadderVAE(pl.LightningModule):
             ll = ll[:, :, pad:-pad, pad:-pad]
             like_dict['params']['mean'] = like_dict['params']['mean'][:, :, pad:-pad, pad:-pad]
 
-        assert ll.shape[1] == 2, f"Change the code below to handle >2 channels first. ll.shape {ll.shape}"
+        assert ll.shape[1] in [2,3,4], f"Change the code below to handle >2 channels first. ll.shape {ll.shape}"
         output = {
             'loss': compute_batch_mean(-1 * ll),
             'ch1_loss': compute_batch_mean(-ll[:, 0]),
             'ch2_loss': compute_batch_mean(-ll[:, 1]),
+            'ch3_loss': compute_batch_mean(-ll[:, 2]),
         }
         if self.channel_1_w is not None or self.channel_2_w is not None:
             output['loss'] = (self.channel_1_w * output['ch1_loss'] +

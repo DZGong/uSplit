@@ -16,6 +16,7 @@ from usplit.nets.unet import UNet
 
 def create_model(config, data_mean, data_std):
     if config.model.model_type == ModelType.LadderVae:
+        # todo: make the target channel to 3. 
         model = LadderVAE(data_mean, data_std, config)
     elif config.model.model_type == ModelType.UNet:
         model = UNet(data_mean, data_std, config)
