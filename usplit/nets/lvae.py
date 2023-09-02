@@ -454,6 +454,7 @@ class LadderVAE(pl.LightningModule):
         """
         each of the channels gets multiplied with a different weight.
         """
+        # import pdb;pdb.set_trace()
         if self.ch1_recons_w == 1 and self.ch2_recons_w == 1 and self.ch3_recons_w == 1: #added ch3 by DZ
             return ll
         mask1 = torch.zeros((len(ll), ll.shape[1], 1, 1), device=ll.device)
@@ -474,6 +475,7 @@ class LadderVAE(pl.LightningModule):
             likelihood_obj = self.likelihood
         # Log likelihood
         ll, like_dict = likelihood_obj(reconstruction, input)
+        # import pdb;pdb.set_trace()
         ll = self._get_weighted_likelihood(ll)
         if self.skip_nboundary_pixels_from_loss is not None and self.skip_nboundary_pixels_from_loss > 0:
             pad = self.skip_nboundary_pixels_from_loss
@@ -489,7 +491,8 @@ class LadderVAE(pl.LightningModule):
         }
         if self.channel_1_w is not None or self.channel_2_w is not None:
             output['loss'] = (self.channel_1_w * output['ch1_loss'] +
-                              self.channel_2_w * output['ch2_loss']) / (self.channel_1_w + self.channel_2_w)
+                              self.channel_2_w * output['ch2_loss'] +
+                              self.channel_3_w * output['ch3_loss']) / (self.channel_1_w + self.channel_2_w + self.channel_3_w)
 
         if self.enable_mixed_rec:
             mixed_pred, mixed_logvar = self.get_mixed_prediction(like_dict['params']['mean'],

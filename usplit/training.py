@@ -323,6 +323,14 @@ def create_model_and_train(config, data_mean, data_std, logger, checkpoint_callb
         os.remove(filename)
 
     model = create_model(config, data_mean, data_std)
+
+    ### resume training from old training
+    # ckpt_fpath = "/home/daozhengg/uSplit/train/2309/D16-M3-S0-L0/7/BaselineVAECL_best.ckpt"
+    # checkpoint = torch.load(ckpt_fpath)
+    # _ = model.load_state_dict(checkpoint['state_dict'])
+    # print('Loading from epoch', checkpoint['epoch'])
+    ###
+
     if config.model.model_type == ModelType.LadderVaeStitch2Stage:
         assert config.training.pre_trained_ckpt_fpath and os.path.exists(config.training.pre_trained_ckpt_fpath)
 

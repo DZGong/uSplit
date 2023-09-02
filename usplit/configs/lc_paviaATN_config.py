@@ -17,6 +17,7 @@ def get_config():
     data.channel_1 = 0
     data.channel_2 = 1
     data.channel_3 = 2 #added by DZ
+    data.channelwise_quantile = True
     # todo: add one more channel.
 
     data.sampler_type = SamplerType.DefaultSampler
