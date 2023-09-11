@@ -1,0 +1,8 @@
+LICENSE
+README.md
+setup.cfg
+setup.py
+uSplit.egg-info/PKG-INFO
+uSplit.egg-info/SOURCES.txt
+uSplit.egg-info/dependency_links.txt
+uSplit.egg-info/top_level.txt
