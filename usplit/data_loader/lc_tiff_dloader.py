@@ -32,6 +32,7 @@ class MultiScaleTiffDloader(MultiChDeterministicTiffDloader):
         max_val=None,
         grid_alignment=GridAlignement.LeftTop,
         overlapping_padding_kwargs=None,
+        test_img_arr: np.ndarray = None
     ):
         """
         Args:
@@ -58,7 +59,8 @@ class MultiScaleTiffDloader(MultiChDeterministicTiffDloader):
                          allow_generation=allow_generation,
                          max_val=max_val,
                          grid_alignment=grid_alignment,
-                         overlapping_padding_kwargs=overlapping_padding_kwargs)
+                         overlapping_padding_kwargs=overlapping_padding_kwargs,
+                         test_img_arr=test_img_arr)
         self.num_scales = num_scales
         assert self.num_scales is not None
         self._scaled_data = [self._data]
@@ -66,7 +68,9 @@ class MultiScaleTiffDloader(MultiChDeterministicTiffDloader):
         self._lowres_supervision = lowres_supervision
         assert isinstance(self._padding_kwargs, dict)
         assert 'mode' in self._padding_kwargs
+        self.load_scaled_data()
 
+    def load_scaled_data(self):
         for _ in range(1, self.num_scales):
             shape = self._scaled_data[-1].shape
             assert len(shape) == 4
@@ -157,3 +161,4 @@ class MultiScaleTiffDloader(MultiChDeterministicTiffDloader):
 
         # _, grid_size = index
         # return inp, target, grid_size
+

@@ -7,71 +7,6 @@ import torch
 
 from usplit.analysis.lvae_utils import get_img_from_forward_output
 
-def get_mmse_dict(model, x_normalized, target_normalized, mmse_count, model_type, psnr_type='range_invariant',
-                  compute_kl_loss=False):
-    assert psnr_type in ['simple', 'range_invariant']
-    if psnr_type == 'simple':
-        psnr_fn = PSNR
-    else:
-        psnr_fn = RangeInvariantPsnr
-
-    img_mmse = 0
-    avg_logvar = None
-    assert mmse_count >= 1
-    for _ in range(mmse_count):
-        recon_normalized, td_data = model(x_normalized)
-        ll, dic = model.likelihood(recon_normalized, target_normalized)
-        recon_img = dic['mean']
-        img_mmse += recon_img / mmse_count
-        if model.predict_logvar:
-            if avg_logvar is None:
-                avg_logvar = 0
-            avg_logvar += dic['logvar'] / mmse_count
-
-    ll, dic = model.likelihood(recon_normalized, target_normalized)
-    mse = (img_mmse - target_normalized) ** 2
-    # batch and the two channels
-    N = np.prod(mse.shape[:2])
-    rmse = torch.sqrt(torch.mean(mse.view(N, -1), dim=1))
-    rmse = rmse.view(mse.shape[:2])
-    loss_mmse = model.likelihood.log_likelihood(target_normalized, {'mean': img_mmse, 'logvar': avg_logvar})
-    kl_loss = None
-    kl_loss_channelwise = None
-    if compute_kl_loss:
-        kl_loss = model.get_kl_divergence_loss(td_data).cpu().numpy()
-        resN = len(td_data['kl_channelwise'])
-        kl_loss_channelwise = [td_data['kl_channelwise'][i].detach().cpu().numpy() for i in range(resN)]
-
-    psnrl1 = psnr_fn(target_normalized[:, 0], img_mmse[:, 0]).cpu().numpy()
-    psnrl2 = psnr_fn(target_normalized[:, 1], img_mmse[:, 1]).cpu().numpy()
-
-    output = {
-        'mmse_img': img_mmse,
-        'mmse_rec_loss': loss_mmse,
-        'img': recon_img,
-        'rec_loss': ll,
-        'rmse': rmse,
-        'psnr_l1': psnrl1,
-        'psnr_l2': psnrl2,
-        'kl_loss': kl_loss,
-        'kl_loss_channelwise': kl_loss_channelwise,
-    }
-    if model_type == ModelType.LadderVAECritic:
-        D_loss = model.get_critic_loss_stats(recon_img, target_normalized)['loss'].cpu().item()
-        cpred_1, cpred_2 = get_critic_prediction(model, recon_img, target_normalized)
-        critic = {
-            'label1': cpred_1,
-            'label2': cpred_2,
-            'D_loss': D_loss,
-        }
-        output['critic'] = critic
-    return output
-
-
-def get_label_separated_loss(loss_tensor):
-    assert loss_tensor.shape[1] == 2
-    return -1 * loss_tensor[:, 0].mean(dim=(1, 2)).cpu().numpy(), -1 * loss_tensor[:, 1].mean(dim=(1, 2)).cpu().numpy()
-
 
 def clean_ax(ax):
     # 2D or 1D axes are of type np.ndarray
@@ -248,15 +183,10 @@ def plot_imgs_from_idx(idx_list,
 
             recon_normalized, td_data = model(x_normalized)
             imgs = get_img_from_forward_output(recon_normalized, model)
-            loss_dic = get_mmse_dict(model, x_normalized, target_normalized, 1, model_type, psnr_type=psnr_type)
-            ll1, ll2 = get_label_separated_loss(loss_dic['mmse_rec_loss'])
 
             inp = inp.cpu().numpy()
             tar = tar.cpu().numpy()
             imgs = imgs.cpu().numpy()
-
-            psnr1 = loss_dic['psnr_l1'][0]
-            psnr2 = loss_dic['psnr_l2'][0]
 
             ax[ax_idx, 0].imshow(inp[0, 0])
             if inset_pixel_kde:
@@ -277,7 +207,6 @@ def plot_imgs_from_idx(idx_list,
 
             ax[ax_idx, 1].imshow(tar[0, 0], vmin=l1_min, vmax=l1_max)
             ax[ax_idx, 2].imshow(imgs[0, 0], vmin=l1_min, vmax=l1_max)
-            add_text(ax[ax_idx, 2], f'PSNR:{psnr1:.1f}', inp.shape[-2:])
             txt = f'{int(l1_min)}-{int(l1_max)}'
             add_text(ax[ax_idx, 2], txt, inp.shape[-2:], place='BOTTOM_RIGHT')
             add_text(ax[ax_idx, 1], txt, inp.shape[-2:], place='BOTTOM_RIGHT')
@@ -299,7 +228,6 @@ def plot_imgs_from_idx(idx_list,
             ax[ax_idx, 3].imshow(tar[0, 1], vmin=l2_min, vmax=l2_max)
             ax[ax_idx, 4].imshow(imgs[0, 1], vmin=l2_min, vmax=l2_max)
             txt = f'{int(l2_min)}-{int(l2_max)}'
-            add_text(ax[ax_idx, 4], f'PSNR:{psnr2:.1f}', inp.shape[-2:])
             add_text(ax[ax_idx, 4], txt, inp.shape[-2:], place='BOTTOM_RIGHT')
             add_text(ax[ax_idx, 3], txt, inp.shape[-2:], place='BOTTOM_RIGHT')
             if inset_pixel_kde:
@@ -314,11 +242,10 @@ def plot_imgs_from_idx(idx_list,
                               color1=color_ch2,
                               color2=color_generated)
 
-            ax[ax_idx, 2].set_title(f'Error: {ll1[0]:.3f}')
-            ax[ax_idx, 4].set_title(f'Error: {ll2[0]:.3f}')
             ax[ax_idx, 0].set_title(f'Id:{img_idx}')
             ax[ax_idx, 1].set_title('Image 1')
             ax[ax_idx, 3].set_title('Image 2')
+
 
 
 # Adding arrows.

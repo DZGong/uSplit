@@ -4,9 +4,12 @@
 This is the official implementation of [μSplit: image decomposition for fluorescence microscopy](https://arxiv.org/abs/2211.12872).
 
 ## Installation
+In case you don't have `mamba`, install it from [here](https://mamba.readthedocs.io/en/latest/mamba-installation.html#mamba-install).
 ```bash
 git clone https://github.com/juglab/uSplit.git
 cd uSplit
+mamba create -n usplit python=3.9
+mamba activate usplit
 ./install_deps.sh
 pip install -e .
 ```
@@ -46,4 +49,23 @@ To train the Vanilla baseline, set `data.multiscale_lowres_count = None`. To tra
 We have also provided the configs for training on our PaviaATN dataset and SinosoidalCritters dataset. Above mentioned hyperparameter settings needs to be changed accordingly.
 
 ## Evaluation
-For evaluation, we have provided pre-trained models and the notebook [here](examples/Evaluate.ipynb). Please download the pre-trained models from [here](https://drive.google.com/drive/folders/1Z3Z3Q2Z3Z3Q2Z3Q2Z3Q2Z3Q2Z3Q2Z3Q2?usp=sharing).
+For evaluation, we have provided the pre-trained models [here](https://zenodo.org/record/8324707). We have provided one notebook [here](examples/Evaluate.ipynb) where one can inspect both qualitatively and quantitatively our models' performances. We have provided another notebook [here](examples/EvaluateOnTestImages.ipynb) where one can evaluate our models on input data where there is no ground truth. Note that in this case, model will perform well only if the input data is similar to input generated from the training data.
+
+## Training on your own data. 
+Codebase will require minimal changes if the data is organized in one of the three ways:
+1. A single tiff file with data shape (N,H,W,C) where C denotes the channel dimension which one intends to split. In this case, simply use `DataType.OptiMEM100_014` as the `data.data_type` in the config. 
+2. Two tiff files, each with data shape (N, H, W) and corresponding to one channel. Use `DataType.SeparateTiffData` as the `data.data_type` in the config.
+3. A .zarr file directory with data shape (N,H,W,C). Use `DataType.SingleZarrData` as the `data.data_type` in the config. In this case, we need to apriori split 'raw' .zarr into train/validation/test. To do this, we need to run the following command:
+    ```bash
+    python usplit/scripts/multiscale_zarr_data_generator.py /home/ubuntu/data/raw.zarr/ /home/ubuntu/data/microscopy_zarr ZHWC 5 --input_zarr_group='raw' --overwrite
+    ```
+
+No other changes should be required and at this point, one can start the training. Note that input will be created by summing the two channels present in the data.
+
+### Steps for data organized in a different way.
+1. Add an entry in `DataType` class for your own data. For example,
+```
+MyDataABC = 17
+```
+2. In `train_val_data.py`, create a function which returns returns the train/val/test data with (N,H,W,C) dimension arrangement.
+3. In `training.py:create_dataset()` you may have to set `dataclass` variable appropriately in case your data is .zarr. 
