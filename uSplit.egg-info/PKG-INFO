@@ -7,7 +7,6 @@ Author: Ashesh, Alexander Krull, Moises Di Sante, Francesco Silvio Pasqualini, F
 Author-email: ashesh276@gmail.com, a.f.f.krull@bham.ac.uk,moises.disante@unipv.it,francesco.pasqualini@unipv.it, florian.jug@fht.org
 License: BSD 3-Clause License
 Project-URL: Repository, https://github.com/juglab/uSplit/
-Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Science/Research
 Classifier: Topic :: Scientific/Engineering
@@ -65,5 +64,3 @@ We have also provided the configs for training on our PaviaATN dataset and Sinos
 
 ## Evaluation
 For evaluation, we have provided pre-trained models and the notebook [here](examples/Evaluate.ipynb). Please download the pre-trained models from [here](https://drive.google.com/drive/folders/1Z3Z3Q2Z3Z3Q2Z3Q2Z3Q2Z3Q2Z3Q2Z3Q2?usp=sharing).
-
-

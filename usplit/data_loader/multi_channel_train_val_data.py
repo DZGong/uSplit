@@ -12,6 +12,7 @@ def train_val_data(fpath, data_config, datasplit_type: DataSplitType, val_fracti
     print(f'Loading {fpath} with Channels {data_config.channel_1},{data_config.channel_2},'
           f'datasplit mode:{DataSplitType.name(datasplit_type)}')
     data = load_tiff(fpath)
+    print('load file finished')
     if data_config.data_type == DataType.Prevedel_EMBL:
         # Ensure that the last dimension is the channel dimension.
         data = data[..., None]
