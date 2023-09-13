@@ -13,7 +13,8 @@ def get_config():
     config = get_default_config()
     data = config.data
     data.image_size = 64
-    data.data_type = DataType.DZGongSIM
+    # data.data_type = DataType.DZGongSIM
+    data.data_type=DataType.SingleZarrData
     data.channel_1 = 0
     data.channel_2 = 1
     data.channel_3 = 2 #added by DZ
