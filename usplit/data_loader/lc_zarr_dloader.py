@@ -38,7 +38,7 @@ class MultiScaleZarrDloader(MultiScaleTiffDloader):
         assert data_config.get('background_quantile', 0.0) == 0.0, msg.format('background_quantile')
         self._datasplit_type = datasplit_type
         self._fpath = fpath
-        self._channels = [data_config.channel_1, data_config.channel_2]
+        self._channels = [data_config.channel_1, data_config.channel_2, data_config.channel_3]
         self._lowres_supervision = lowres_supervision
 
         self.num_scales = num_scales
